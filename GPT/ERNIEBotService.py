@@ -122,6 +122,8 @@ class ERNIEBot():
 
         self.counter += 1  # 计数器自增1
 
+        complete_text = ""  # 保存完整的响应文本内容
+
         # 根据chatVer的值选择不同的方法调用，并遍历返回的数据
         # 如果条件为True，那么表达式的结果是self.chatbot.ask_stream(text)；如果条件为False，那么表达式的结果将是迭代器循环的结果。
 
@@ -144,14 +146,33 @@ class ERNIEBot():
         # generator 生成器本身就是迭代器，所以只能遍历一次。
         for message in response.iter_lines():
             if message:
-                message = json.loads(message[6:].decode('utf-8'))  # 将字节转换为字符串，并解析为JSON对象
-                is_end = message.get("is_end", False)  # 检查 "is_end" 字段的值，默认为 False
-                complete_text = message.get("result")  # 取出消息部分
-                logging.info('ERNIEBot流式响应：%s，@时间 %.2f秒' % (complete_text, time.time() - stime))  # 记录响应日志
-                yield complete_text.strip()  # 返回片段的响应文本，并清除首尾的空白字符
+                try:
+                    message = json.loads(message[6:].decode('utf-8'))  # 将字节转换为字符串，并解析为JSON对象
+                    is_end = message.get("is_end", False)  # 检查 "is_end" 字段的值，默认为 False
+                    message = message.get("result")  # 取出消息部分
 
-                if is_end:
-                    break
+                    # 句子完整性判断
+                    # 如果消息中包含句号、感叹号、问号或换行符且complete_text长度大于3，则表示已经接收到完整的响应
+                    if ("。" in message or "！" in message or "？" in message or "\n" in message) and len(
+                            complete_text) > 3:
+                        complete_text += message  # 将当前消息追加到完整的响应文本中
+                        logging.info(
+                            'ERNIEBot流式响应：%s，@时间 %.2f秒' % (complete_text, time.time() - stime))  # 记录响应日志
+                        yield complete_text.strip()  # 返回完整的响应文本，并清除首尾的空白字符
+                        complete_text = ""  # 重置完整的响应语句
+                    else:
+                        complete_text += message  # 将当前消息追加到完整的响应文本中
+
+                    # logging.info('ERNIEBot流式响应：%s，@时间 %.2f秒' % (message, time.time() - stime))  # 记录响应日志
+                    # yield message.strip()  # 返回片段的响应文本，并清除首尾的空白字符
+
+                    if is_end:
+                        break
+                except json.decoder.JSONDecodeError as e:
+                    error_info = json.loads(message.content.decode('utf-8'))
+                    error_msg = error_info.get("error_msg")
+                    logging.info(f"JSONDecodeError: {e}, error_msg: {error_msg}")
+                    continue
             else:
                 # b'' 或 无法请求 等
                 pass

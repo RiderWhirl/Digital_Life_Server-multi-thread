@@ -218,7 +218,7 @@ class Server():
                 file_data += data[0:-2]
                 break
             if not data:
-                logging.info('Waiting for WAV...')
+                # logging.info('Waiting for WAV...')
                 continue
             file_data += data
 
