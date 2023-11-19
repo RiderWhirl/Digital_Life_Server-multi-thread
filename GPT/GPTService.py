@@ -44,7 +44,7 @@ class GPTService():
             else:
                 logging.info('使用自定义API代理，带有速率限制。')
                 # 没有设置OpenAI APIKey 时使用自建端口
-                os.environ['API_URL'] = "https://api.geekerwan.net/chatgpt2"
+                os.environ['API_URL'] = ""
                 api_key = mach_id
 
             self.chatbot = Chatbot(api_key=api_key, proxy=args.proxy, system_prompt=self.tune)  # 初始化V3版本的Chatbot
