@@ -40,11 +40,15 @@ git clone https://github.com/liegu0317/Digital_Life_Server.git --recursive
    cp monotonic_align/*.pyd .
    ```
 
-4. 下载模型  
-   [百度网盘](https://pan.baidu.com/s/1EnHDPADNdhDl71x_DHeElg?pwd=75gr)
-   - ASR模型：放置到`/ASR/resources/models`目录下
-   - Sentiment 模型：放置到`/SentimentEngine/models`目录下
-   - TTS模型：放置到`/TTS/models`目录下
+4. 下载模型
+   - [百度网盘](https://pan.baidu.com/s/1BkUnSte6Zso16FYlUMGfww?pwd=lg17)
+   - [阿里云盘](https://www.aliyundrive.com/s/jFvgsJVtV6g)
+      - ASR Model: 放置于 `/ASR/resources/models`
+      - Sentiment Model: 放置于 `/SentimentEngine/models`
+      - TTS Model: 放置于 `/TTS/models`
+      - ASR模型：放置到`/ASR/resources/models`目录下
+      - Sentiment 模型：放置到`/SentimentEngine/models`目录下
+      - TTS模型：放置到`/TTS/models`目录下
 
 5. （对于**没有**Nvidia显卡的电脑，采用CPU来运行的情况）需要额外的步骤：
 

@@ -75,7 +75,16 @@ class Server():
         self.addr = None  # 连接地址
         self.conn = None  # 连接对象
         logging.info('Initializing Server...')  # 初始化日志记录
-        self.local_host = socket.gethostbyname(socket.gethostname())  # 获取主机IP地址
+
+        try:
+            response = requests.get('https://httpbin.org/ip')
+            ip_data = response.json()
+            public_ip = ip_data.get('origin', 'Unable to retrieve public IP')
+            self.local_host = public_ip
+        except requests.RequestException as e:
+            logging.warning(f"Error retrieving public IP: {e}")
+            self.local_host = socket.gethostbyname(socket.gethostname())  # 获取主机IP地址
+
         self.host = "0.0.0.0"  # 监听所有本机IP
         self.port = 38438  # 服务器端口号
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # 创建 TCP socket 对象
