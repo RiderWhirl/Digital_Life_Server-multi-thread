@@ -83,7 +83,14 @@ def parse_args():
     return parser.parse_args()
 
 
-class Server():
+def time_now():
+    """
+    :return: 格式日期 eg:2023-11-20 17:52:59,507
+    """
+    return time.strftime("%Y-%m-%d %H:%M:%S,000", time.localtime())
+
+
+class Server:
     def __init__(self, args):
         # 服务器初始化
         logging.info('Initializing Server...')  # 初始化日志记录
@@ -148,11 +155,9 @@ class Server():
     def handle_client(self, conn, addr):
         # 使用客户端地址和端口生成唯一的文件名
         addr_str = addr[0].replace('.', '_') + '_' + str(addr[1])
-        # timestamp = int(time.time() * 1000)  # 获取毫秒级时间戳
-        # tmp_recv_file = f'tmp/{addr_str}_{timestamp}_server_received.wav'
-        # tmp_proc_file = f'tmp/{addr_str}_{timestamp}_server_processed.wav'
-        tmp_recv_file = f'tmp/{addr_str}_server_received.wav'
-        tmp_proc_file = f'tmp/{addr_str}_server_processed.wav'
+        tmp_recv_file = f'tmp/{addr_str}_{time.time()}_server_received.wav'
+        tmp_proc_file = f'tmp/{addr_str}_{time.time()}_server_processed.wav'
+        temp_qalog_file = f'tmp/{addr_str}_qa.txt'
         try:
             local_conn, local_addr = conn, addr  # 接受客户端连接
             logging.info(f"已连接 {local_addr}")  # 记录日志，显示已连接的客户端地址
@@ -165,27 +170,30 @@ class Server():
                         f.write(file)
                         logging.info('已接收并保存 WAV 文件。')
                     ask_text = self.process_voice(tmp_recv_file)  # 处理语音获取文本
+                    with open(temp_qalog_file, 'a') as f:
+                        f.write(f"{time_now} Q: {ask_text}\n")
+                        logging.info('已记录Q...')
 
                     if args.stream:  # 流式回复
                         if "Y" in args.model or "E" in args.model:  # ERNIEBot
                             # text_generator = self.ERNIEBot.ask_stream(ask_text)  # 进行ERNIEBot对话生成
                             for resp_text in self.ERNIEBot.ask_stream(ask_text):  # 进行ERNIEBot对话生成:
-                                self.send_voice(resp_text, conn, tmp_proc_file)  # 发送语音回复
+                                self.send_voice(resp_text, conn, tmp_proc_file, temp_qalog_file)  # 发送语音回复
                             self.notice_stream_end(conn)  # 通知流式对话结束
                             continue
                         # 以流式方式进行对话生成
                         for sentence in self.chat_gpt.ask_stream(ask_text):  # gpt
-                            self.send_voice(sentence, conn, tmp_proc_file)  # 发送语音回复
+                            self.send_voice(sentence, conn, tmp_proc_file, temp_qalog_file)  # 发送语音回复
                         self.notice_stream_end(conn)  # 通知流式对话结束
                         logging.info('流式对话已完成。')
                     elif "Y" in args.model or "E" in args.model:  # ERNIEBot ask
                         for sentence in self.ERNIEBot.ask(ask_text):  # 进行ERNIEBot对话生成
-                            self.send_voice(sentence, conn, tmp_proc_file)  # 发送语音回复
+                            self.send_voice(sentence, conn, tmp_proc_file, temp_qalog_file)  # 发送语音回复
                         self.notice_stream_end(conn)  # 通知流式对话结束
                         continue
                     else:  # gpt ask
                         resp_text = self.chat_gpt.ask(ask_text)  # 进行对话生成
-                        self.send_voice(resp_text, conn, tmp_proc_file)  # 发送语音回复
+                        self.send_voice(resp_text, conn, tmp_proc_file, temp_qalog_file)  # 发送语音回复
                         self.notice_stream_end(conn)  # 通知流式对话结束
                 except ConnectionAbortedError:
                     logging.info(f"客户端 {local_addr} 已离线")
@@ -193,17 +201,17 @@ class Server():
                 except revChatGPT.typings.APIConnectionError as e:
                     logging.error(e.__str__())
                     logging.info('API 请求频率超过限制，发送: %s' % GPT.tune.exceed_reply)
-                    self.send_voice(GPT.tune.exceed_reply, conn, tmp_proc_file, 2)  # 发送频率超过限制的语音回复
+                    self.send_voice(GPT.tune.exceed_reply, conn, tmp_proc_file, temp_qalog_file, 2)  # 发送频率超过限制的语音回复
                     self.notice_stream_end(conn)  # 通知流式对话结束
                 except revChatGPT.typings.Error as e:
                     logging.error(e.__str__())
                     logging.info('OPENAI 出现问题，发送: %s' % GPT.tune.error_reply)
-                    self.send_voice(GPT.tune.error_reply, conn, tmp_proc_file, 1)  # 发送 OPENAI 出错的语音回复
+                    self.send_voice(GPT.tune.error_reply, conn, tmp_proc_file, temp_qalog_file, 1)  # 发送 OPENAI 出错的语音回复
                     self.notice_stream_end(conn)  # 通知流式对话结束
                 except requests.exceptions.RequestException as e:
                     logging.error(e.__str__())
                     logging.info('网络出现问题，发送: %s' % GPT.tune.error_reply)
-                    self.send_voice(GPT.tune.error_reply, conn, tmp_proc_file, 1)  # 发送网络出错的语音回复
+                    self.send_voice(GPT.tune.error_reply, conn, tmp_proc_file, temp_qalog_file, 1)  # 发送网络出错的语音回复
                     self.notice_stream_end(conn)  # 通知流式对话结束
                 except Exception as e:
                     logging.error(e.__str__())
@@ -222,7 +230,7 @@ class Server():
         time.sleep(0.5)
         conn.sendall(b'stream_finished')  # 向客户端发送流式对话结束的通知
 
-    def send_voice(self, resp_text, conn, tmp_proc_file, senti_or=None):
+    def send_voice(self, resp_text, conn, tmp_proc_file, temp_qalog_file=None, senti_or=None):
         """
         发送语音回复的方法。
 
@@ -236,6 +244,9 @@ class Server():
         self.tts.read_save(resp_text, tmp_proc_file, self.tts.hps.data.sampling_rate)  # 将回复文本转换为语音并保存为临时处理文件
         with open(tmp_proc_file, 'rb') as f:
             senddata = f.read()
+        with open(temp_qalog_file, 'a') as f:
+            f.write(f"{time_now} A: {resp_text}\n")
+            logging.info('已记录A...')
         if senti_or:
             senti = senti_or
         else:
@@ -268,7 +279,8 @@ class Server():
 
         return file_data
 
-    def fill_size_wav(self, tmp_recv_file):
+    @staticmethod
+    def fill_size_wav(tmp_recv_file):
         """
         填充 WAV 文件的大小。
 
