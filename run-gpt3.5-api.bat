@@ -4,6 +4,7 @@ set SCRIPT_NAME=SocketServer.py
 set PROXY=http://127.0.0.1:7890
 set STREAM=True
 set CHARACTER=paimon
+@REM set MODEL=chatgpt-35
 set MODEL=ERNIE-Bot-4
 set accessToken=
 @REM demo by lancher
