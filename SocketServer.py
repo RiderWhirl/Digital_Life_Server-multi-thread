@@ -1,5 +1,6 @@
 # 用于接收音频文件并使用一系列服务进行语音识别、自然语言处理和语音合成
 import argparse
+import json
 import logging
 import os
 import socket
@@ -91,7 +92,7 @@ def time_now():
 
 
 class Server:
-    def __init__(self, args):
+    def __init__(self, args_all):
         # 服务器初始化
         logging.info('Initializing Server...')  # 初始化日志记录
 
@@ -101,8 +102,8 @@ class Server:
             ip_data = response.json()
             public_ip = ip_data.get('origin', 'Unable to retrieve public IP')
             self.local_host = public_ip
-        except requests.RequestException as e:
-            logging.warning(f"Error retrieving public IP: {e}")
+        except requests.RequestException as e_f:
+            logging.warning(f"Error retrieving public IP: {e_f}")
             self.local_host = socket.gethostbyname(socket.gethostname())  # 获取主机IP地址
 
         self.host = "0.0.0.0"  # 监听所有本机IP
@@ -110,6 +111,7 @@ class Server:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # 创建 TCP socket 对象
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 10240000)  # 设置 socket 缓冲区大小
         self.s.bind((self.host, self.port))  # 将服务器绑定到指定的地址和端口
+        self.lock = threading.Lock()  # 创建锁
 
         # 硬编码的角色映射
         self.char_name = {
@@ -121,21 +123,21 @@ class Server:
         # 语音识别服务
         self.paraformer = ASRService.ASRService('./ASR/resources/config.yaml')
 
-        if "gpt" in args.model or "GPT" in args.model:
+        if "gpt" in args_all.model or "GPT" in args_all.model:
             # ChatGPT对话生成服务
-            self.chat_gpt = GPTService.GPTService(args)
-        elif "Y" in args.model or "E" in args.model:
+            self.chat_gpt = GPTService.GPTService(args_all)
+        elif "Y" in args_all.model or "E" in args_all.model:
             # ERNIEBot对话生成服务
-            self.ERNIEBot = ERNIEBotService.ERNIEBot(args)
-            if args.accessToken:
-                self.ERNIEBot.access_token = args.accessToken
+            self.ERNIEBot = ERNIEBotService.ERNIEBot(args_all)
+            if args_all.accessToken:
+                self.ERNIEBot.access_token = args_all.accessToken
             else:
                 # 生成此次会话标志码
-                self.ERNIEBot.access_token = self.ERNIEBot.get_access_token(args.APIKey, args.SecretKey)
+                self.ERNIEBot.access_token = self.ERNIEBot.get_access_token(args_all.APIKey, args_all.SecretKey)
                 logging.info("会话标志码" + self.ERNIEBot.access_token)
 
         # 语音合成服务
-        self.tts = TTService.TTService(*self.char_name[args.character])
+        self.tts = TTService.TTService(*self.char_name[args_all.character])
 
         # 情感分析引擎
         self.sentiment = SentimentEngine.SentimentEngine('SentimentEngine/models/paimon_sentiment.onnx')
@@ -154,73 +156,73 @@ class Server:
 
     def handle_client(self, conn, addr):
         # 使用客户端地址和端口生成唯一的文件名
-        addr_str = addr[0].replace('.', '_') + '_' + str(addr[1])
+        only_ip = addr[0].replace('.', '_')
+        addr_str = only_ip + '_' + str(addr[1])
         tmp_recv_file = f'tmp/{addr_str}_{time.time()}_server_received.wav'
         tmp_proc_file = f'tmp/{addr_str}_{time.time()}_server_processed.wav'
-        temp_qalog_file = f'tmp/{addr_str}_qa.txt'
+        save_session_json = f'tmp/{only_ip}_session_log.json'
         try:
             local_conn, local_addr = conn, addr  # 接受客户端连接
             logging.info(f"已连接 {local_addr}")  # 记录日志，显示已连接的客户端地址
             local_conn.sendall(b'%s' % self.char_name[args.character][2].encode())  # 向客户端发送角色名称
             while True:
                 try:
+                    resp_text_all = ""
                     file = self.__receive_file(conn)  # 接收文件
-                    logging.info('file received.')
+                    # logging.info('file received.')
                     with open(tmp_recv_file, 'wb') as f:
                         f.write(file)
                         logging.info('已接收并保存 WAV 文件。')
                     ask_text = self.process_voice(tmp_recv_file)  # 处理语音获取文本
-                    with open(temp_qalog_file, 'a') as f:
-                        f.write(f"{time_now} Q: {ask_text}\n")
-                        logging.info('已记录Q...')
-
-                    if args.stream:  # 流式回复
-                        if "Y" in args.model or "E" in args.model:  # ERNIEBot
-                            # text_generator = self.ERNIEBot.ask_stream(ask_text)  # 进行ERNIEBot对话生成
-                            for resp_text in self.ERNIEBot.ask_stream(ask_text):  # 进行ERNIEBot对话生成:
-                                self.send_voice(resp_text, conn, tmp_proc_file, temp_qalog_file)  # 发送语音回复
-                            self.notice_stream_end(conn)  # 通知流式对话结束
-                            continue
-                        # 以流式方式进行对话生成
-                        for sentence in self.chat_gpt.ask_stream(ask_text):  # gpt
-                            self.send_voice(sentence, conn, tmp_proc_file, temp_qalog_file)  # 发送语音回复
+                    with self.lock:
+                        self.save_session_to_file(ask_text, save_session_json, "user")  # 保存user发言日志
+                    if args.stream and ("Y" in args.model or "E" in args.model):
+                        generator = self.ERNIEBot.ask_stream(
+                            ask_text,
+                            save_session_json) if "Y" in args.model or "E" in args.model else self.chat_gpt.ask_stream(
+                            ask_text)
+                        for resp_text in generator:  # 进行对话生成
+                            resp_text_all += resp_text
+                            self.send_voice(resp_text, conn, tmp_proc_file)  # 保存并发送语音回复
+                        with self.lock:
+                            self.save_session_to_file(resp_text_all, save_session_json,
+                                                      "assistant")  # 保存assistant发言日志
                         self.notice_stream_end(conn)  # 通知流式对话结束
                         logging.info('流式对话已完成。')
-                    elif "Y" in args.model or "E" in args.model:  # ERNIEBot ask
-                        for sentence in self.ERNIEBot.ask(ask_text):  # 进行ERNIEBot对话生成
-                            self.send_voice(sentence, conn, tmp_proc_file, temp_qalog_file)  # 发送语音回复
+                    else:
+                        generator = self.ERNIEBot.ask(
+                            ask_text,
+                            save_session_json) if "Y" in args.model or "E" in args.model else self.chat_gpt.ask(
+                            ask_text)
+                        with self.lock:
+                            self.save_session_to_file(generator, save_session_json,
+                                                      "assistant")  # 保存assistant发言日志
+                        self.send_voice(generator, conn, tmp_proc_file)  # 保存并发送语音回复
                         self.notice_stream_end(conn)  # 通知流式对话结束
-                        continue
-                    else:  # gpt ask
-                        resp_text = self.chat_gpt.ask(ask_text)  # 进行对话生成
-                        self.send_voice(resp_text, conn, tmp_proc_file, temp_qalog_file)  # 发送语音回复
+
+                except (ConnectionAbortedError, revChatGPT.typings.APIConnectionError, revChatGPT.typings.Error,
+                        requests.exceptions.RequestException) as e_gpt:
+                    if isinstance(e_gpt, ConnectionAbortedError):
+                        logging.info(f"客户端 {local_addr} 连接不畅！[已中断]")
+                        time.sleep(1)
+                        break
+                    else:
+                        logging.error(e_gpt.__str__())
+                        logging.info(f'GPT运行出现错误: {GPT.tune.error_reply}')
+                        self.send_voice(GPT.tune.error_reply, conn, tmp_proc_file, 1)  # 发送错误的语音回复
+                        with self.lock:
+                            self.save_session_to_file(f"发送错误回复: {GPT.tune.error_reply}", save_session_json,
+                                                      "assistant")  #
+                        # 保存assistant发言日志
                         self.notice_stream_end(conn)  # 通知流式对话结束
-                except ConnectionAbortedError:
-                    logging.info(f"客户端 {local_addr} 已离线")
-                    break
-                except revChatGPT.typings.APIConnectionError as e:
-                    logging.error(e.__str__())
-                    logging.info('API 请求频率超过限制，发送: %s' % GPT.tune.exceed_reply)
-                    self.send_voice(GPT.tune.exceed_reply, conn, tmp_proc_file, temp_qalog_file, 2)  # 发送频率超过限制的语音回复
-                    self.notice_stream_end(conn)  # 通知流式对话结束
-                except revChatGPT.typings.Error as e:
-                    logging.error(e.__str__())
-                    logging.info('OPENAI 出现问题，发送: %s' % GPT.tune.error_reply)
-                    self.send_voice(GPT.tune.error_reply, conn, tmp_proc_file, temp_qalog_file, 1)  # 发送 OPENAI 出错的语音回复
-                    self.notice_stream_end(conn)  # 通知流式对话结束
-                except requests.exceptions.RequestException as e:
-                    logging.error(e.__str__())
-                    logging.info('网络出现问题，发送: %s' % GPT.tune.error_reply)
-                    self.send_voice(GPT.tune.error_reply, conn, tmp_proc_file, temp_qalog_file, 1)  # 发送网络出错的语音回复
-                    self.notice_stream_end(conn)  # 通知流式对话结束
-                except Exception as e:
-                    logging.error(e.__str__())
+                except Exception as e_gpt:
+                    logging.error(e_gpt.__str__())
                     logging.error(traceback.format_exc())
                     break
-        except Exception as e:
-            logging.error(f"Error in thread handling client {addr}: {e}")
-            # logging.error(e.__str__())
-            # logging.error(traceback.format_exc())
+        except OSError:
+            print(f"客户端 {addr}已离线！")
+        except Exception as e_end:
+            logging.error(f"意料之外的情况：{e_end}")
 
     @staticmethod
     def notice_stream_end(conn):
@@ -230,7 +232,7 @@ class Server:
         time.sleep(0.5)
         conn.sendall(b'stream_finished')  # 向客户端发送流式对话结束的通知
 
-    def send_voice(self, resp_text, conn, tmp_proc_file, temp_qalog_file=None, senti_or=None):
+    def send_voice(self, resp_text, conn, tmp_proc_file, senti_or=None):
         """
         发送语音回复的方法。
 
@@ -243,19 +245,16 @@ class Server:
         """
         self.tts.read_save(resp_text, tmp_proc_file, self.tts.hps.data.sampling_rate)  # 将回复文本转换为语音并保存为临时处理文件
         with open(tmp_proc_file, 'rb') as f:
-            senddata = f.read()
-        with open(temp_qalog_file, 'a') as f:
-            f.write(f"{time_now} A: {resp_text}\n")
-            logging.info('已记录A...')
+            send_data = f.read()
         if senti_or:
             senti = senti_or
         else:
             senti = self.sentiment.infer(resp_text)  # 对回复文本进行情感分析
-        senddata += b'?!'
-        senddata += b'%i' % senti
-        conn.sendall(senddata)  # 向客户端发送语音回复
+        send_data += b'?!'
+        send_data += b'%i' % senti
+        conn.sendall(send_data)  # 向客户端发送语音回复
         time.sleep(0.5)
-        logging.info('WAV SENT, size %i' % len(senddata))  # 记录发送的语音回复的大小
+        logging.info('WAV SENT, size %i' % len(send_data))  # 记录发送的语音回复的大小
 
     @staticmethod
     def __receive_file(conn):
@@ -295,6 +294,34 @@ class Server:
             f.seek(40)
             f.write((size - 28).to_bytes(4, byteorder='little'))
             f.flush()
+
+    @staticmethod
+    def save_session_to_file(ask_text, file_name, role="assistant"):
+        """
+        将ask_text保存到文件的方法。【待修复：file_name文件过大会影响处理效率】
+
+        参数：
+        - ask_text: 要保存的ask_text字符串。
+        - file_path: 文件路径。
+        - role: 发言者
+        """
+        new_message = {"role": role, "content": ask_text}
+
+        # 检查文件是否存在
+        if os.path.exists(file_name):
+            # 文件存在，读取并追加数据
+            with open(file_name, 'r', encoding='utf-8') as file:
+                data = json.load(file)
+            data["messages"].append(new_message)
+        else:
+            # 文件不存在，创建新的数据结构
+            data = {"messages": [new_message]}
+
+        # 写回文件
+        with open(file_name, 'w', encoding='utf-8') as file:
+            json.dump(data, file, ensure_ascii=False, indent=4)
+
+        logging.info(f"{role}记录新至文件：{file_name}")
 
     def process_voice(self, tmp_recv_file):
         """
