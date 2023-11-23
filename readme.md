@@ -7,7 +7,7 @@
 - [Launcher](https://github.com/LIEGU0317/DL_Launcher): 用于启动此服务器的图形界面。（非必要）
 - [UE Client](https://github.com/LIEGU0317/DigitalLife): 用于渲染人物动画、录音和播放声音的前端部分。
 
-有关详细配置流程，请参阅[readme_detail.md](readme_detail.md)。
+[详细配置流程](readme_detail.md) | [开发计划](todolist.md)
 
 ## 准备开始：
 
