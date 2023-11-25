@@ -10,13 +10,12 @@ import traceback
 
 import librosa
 import requests
-import revChatGPT
 import soundfile
 
 import GPT.tune
 from ASR import ASRService
 from GPT import ERNIEBotService
-from GPT import GPTService
+from GPT import GPTService_v2 as GPTService  # 暂时使用v2替换v1
 from SentimentEngine import SentimentEngine
 from TTS import TTService
 from utils.FlushingFileHandler import FlushingFileHandler
@@ -59,19 +58,13 @@ def str2bool(v):
 def parse_args():
     # 解析命令行参数
     parser = argparse.ArgumentParser()
-    # 1 Token / Email&Password ， 3 OPENAI_API_KEY
-    parser.add_argument("--chatVer", type=int, nargs='?', required=False)
     parser.add_argument("--APIKey", type=str, nargs='?', required=False)
     # ERNIEBot app SecretKey
     parser.add_argument("--SecretKey", type=str, nargs='?', required=False)
-    # ERNIEBot accessToken / OPEN_CHATGPT setCookie
+    # ERNIEBot accessToken
     parser.add_argument("--accessToken", type=str, nargs='?', required=False)
-    # parser.add_argument("--email", type=str, nargs='?', required=False)
-    # parser.add_argument("--password", type=str, nargs='?', required=False)
     # ChatGPT 代理服务器 http://127.0.0.1:7890
     parser.add_argument("--proxy", type=str, nargs='?', required=False)
-    # "paid": True/False, # whether this is a plus account
-    parser.add_argument("--paid", type=str2bool, nargs='?', required=False)
     # 会话模型
     parser.add_argument("--model", type=str, nargs='?', required=True)
     # 流式语音
@@ -84,11 +77,11 @@ def parse_args():
     return parser.parse_args()
 
 
-def time_now():
-    """
-    :return: 格式日期 eg:2023-11-20 17:52:59,507
-    """
-    return time.strftime("%Y-%m-%d %H:%M:%S,000", time.localtime())
+# def time_now():
+#     """
+#     :return: 格式日期 eg:2023-11-20 17:52:59,507
+#     """
+#     return time.strftime("%Y-%m-%d %H:%M:%S,000", time.localtime())
 
 
 class Server:
@@ -104,7 +97,7 @@ class Server:
             self.local_host = public_ip
         except requests.RequestException as e_f:
             logging.warning(f"Error retrieving public IP: {e_f}")
-            self.local_host = socket.gethostbyname(socket.gethostname())  # 获取主机IP地址
+        self.local_host_2 = socket.gethostbyname(socket.gethostname())  # 获取主机IP地址
 
         self.host = "0.0.0.0"  # 监听所有本机IP
         self.port = 38438  # 服务器端口号
@@ -142,7 +135,7 @@ class Server:
         # 情感分析引擎
         self.sentiment = SentimentEngine.SentimentEngine('SentimentEngine/models/paimon_sentiment.onnx')
 
-        logging.info("正在使用的主机IP地址：%s ", self.local_host)
+        logging.info("正在使用的主机IP地址：%s or %s", self.local_host, self.local_host_2)
         logging.info(f"服务器正在监听 {self.host}:{self.port}...")  # 记录日志，显示服务器正在监听的地址和端口
 
     def listen(self):
@@ -160,7 +153,7 @@ class Server:
         addr_str = only_ip + '_' + str(addr[1])
         tmp_recv_file = f'tmp/{addr_str}_{time.time()}_server_received.wav'
         tmp_proc_file = f'tmp/{addr_str}_{time.time()}_server_processed.wav'
-        save_session_json = f'tmp/{only_ip}_session_log.json'
+        save_session_json = f'tmp/{args.model}_{only_ip}_session_log.json'
         try:
             local_conn, local_addr = conn, addr  # 接受客户端连接
             logging.info(f"已连接 {local_addr}")  # 记录日志，显示已连接的客户端地址
@@ -176,10 +169,9 @@ class Server:
                     ask_text = self.process_voice(tmp_recv_file)  # 处理语音获取文本
                     with self.lock:
                         self.save_session_to_file(ask_text, save_session_json, "user")  # 保存user发言日志
-                    if args.stream and ("Y" in args.model or "E" in args.model):
-                        generator = self.ERNIEBot.ask_stream(
-                            ask_text,
-                            save_session_json) if "Y" in args.model or "E" in args.model else self.chat_gpt.ask_stream(
+                    if args.stream:
+                        generator = self.ERNIEBot.ask_stream(ask_text,
+                                                             save_session_json) if "Y" in args.model or "E" in args.model else self.chat_gpt.ask_stream(
                             ask_text)
                         for resp_text in generator:  # 进行对话生成
                             resp_text_all += resp_text
@@ -200,8 +192,7 @@ class Server:
                         self.send_voice(generator, conn, tmp_proc_file)  # 保存并发送语音回复
                         self.notice_stream_end(conn)  # 通知流式对话结束
 
-                except (ConnectionAbortedError, revChatGPT.typings.APIConnectionError, revChatGPT.typings.Error,
-                        requests.exceptions.RequestException) as e_gpt:
+                except (ConnectionAbortedError, requests.exceptions.RequestException) as e_gpt:
                     if isinstance(e_gpt, ConnectionAbortedError):
                         logging.info(f"客户端 {local_addr} 连接不畅！[已中断]")
                         time.sleep(1)

@@ -1,3 +1,6 @@
+"""
+2023年11月25日 - 已弃用
+"""
 import logging
 import os
 import time
