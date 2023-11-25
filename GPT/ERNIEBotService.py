@@ -16,23 +16,15 @@ class ERNIEBot:
         """
         self.access_token = ""
         logging.info('初始化 ERNIE-Bot 服务...')
-
         self.tune = tune.get_tune(args.character, args.model)  # 获取tune-催眠咒
-
         self.counter = 0  # 洗脑计数器
-
         if "4" in args.model:  # ERNIE-Bot-4
             self.baseurl = ("https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro"
                             "?access_token=")
         else:  # ERNIE-Bot
             self.baseurl = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions?access_token="
-
         self.brainwash = args.brainwash  # 是否启用Brainwash模式
-
-        # self.access_token = self.get_access_token(args.APIKey, args.SecretKey)  # 获取访问令牌
-
         self.is_executed = False  # 标志变量，注入是否已经启用过，初始设置为False
-
         logging.info("ERNIE-Bot已初始化。")
 
     @staticmethod
