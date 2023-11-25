@@ -2,7 +2,8 @@
 
 ## 注意事项
 
-⚠ **重要：** 如果你是初学者，请在**需要存放该项目的位置**打开终端（Win11）或Powershell（Win10）或Terminal（Linux），并**按照以下步骤操作**
+⚠ **重要：** 如果你是初学者，请在**需要存放该项目的位置**打开终端（Win11）或Powershell（Win10）或Terminal（Linux），并**按照以下步骤操作
+**
 。在开始前，请确保电脑中已安装Git和Conda。
 
 ## 安装步骤
@@ -124,7 +125,7 @@ run-gpt3.5-api.sh
 
 | 名称          | 描述                  | 备注                                                                             | 必填               |
 |-------------|---------------------|--------------------------------------------------------------------------------|------------------|
-| APIKey      | 应用秘钥                | OPENAI_API_KEY、ERINEBot API Key                                                | ERINEBot、ChatGPT |
+| APIKey      | 应用秘钥                | OPENAI_API_KEY、ERINEBot_API_Key                                                | ERINEBot、ChatGPT |
 | SecretKey   | ERINEBot Secret Key | ERINEBot Secret Key                                                            | ERINEBot         |
 | accessToken | 会话标志码               | [ERNIEBot accessToken](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/Ilkkrb0i5) |
 | proxy       | 代理服务地址              | ChatGPT 代理服务的地址，例如http://127.0.0.1:7890                                        |                  |
@@ -137,16 +138,13 @@ run-gpt3.5-api.sh
 
 - 调用ChatGPT命令行示例：
   ```bash
-  python %SCRIPT_NAME% --chatVer 3  --APIKey %OPENAI_API_KEY%  --proxy %PROXY% --stream %STREAM% --model %MODEL% --character %CHARACTER%
-  ```
-  ```bash
-  python %SCRIPT_NAME% --chatVer 1  --accessToken %accessToken%  --proxy %PROXY% --stream %STREAM% --model %MODEL% --character %CHARACTER%
+  python SocketServer.py --APIKey %OPENAI_API_KEY%  --proxy http://127.0.0.1:7890 --stream false --model gpt-3.5-turbo --character paimon
   ```
 - 调用ERNIEBot命令行示例：
   ```bash
-  python %SCRIPT_NAME% --stream %STREAM%  --SecretKey %EB4_SK% --APIKey %EB4_APIKey% --model %MODEL% --character %CHARACTER%
+  python SocketServer.py --stream true  --SecretKey %ERINEBot_SecretKey% --APIKey %ERINEBot_API_Key % --model ERNIEBot-4 --character paimon
   ```
   ```bash
-  python %SCRIPT_NAME% --stream %STREAM%  --accessToken %accessToken% --model %MODEL% --character %CHARACTER%
+  python SocketServer.py --stream true  --accessToken %accessToken% --model ERINEBot --character catmaid
   ```
 
