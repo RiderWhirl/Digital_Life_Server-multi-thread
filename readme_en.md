@@ -21,31 +21,37 @@
             alt="follow on Twitter"></a>
 </p>
 
+This service encompasses front-end communication, voice recognition, ChatGPT/ERNIE-Bot integration, and speech
+synthesis. It serves as the core of the Digital Life ecosystem, designed to provide users with a seamless and dynamic
+digital experience.
 
-这是一个涵盖前端通信、语音识别、ChatGPT/ERNIE-Bot 集成和语音合成的服务。它是数字生命生态系统的核心，旨在为用户提供无缝、动态的数字体验。
-> **翻译声明：** 本文档的英文版本由 ChatGPT 从原始的中文版本翻译。如有差异，以中文原版为准。
-[[English ]](readme_en.md)
 
-### 相关项目
+> **Translation Disclaimer:** The English version of this document has been translated from the original Chinese version
+> by ChatGPT. For any discrepancies, the original Chinese version shall prevail.
+[[简体中文]](readme.md)
 
-- [UE Client](https://github.com/LIEGU0317/DigitalLife)：用于渲染人物动画、录音和播放声音的前端部分。
+### Related Projects
 
-[详细配置流程](readme_detail.md) | [开发计划](todolist.md)
+- [UE Client](https://github.com/LIEGU0317/DigitalLife): The front-end part for rendering character animations,
+  recording, and playing sounds.
 
-## 快速开始
+[Detailed Setup Process](readme_detail.md) | [Development Plan](todolist.md)
 
-请遵循我们的[详细配置流程](readme_detail.md)来设置和安装所需的环境和依赖项。
+## Quick Start
 
-### 克隆仓库
+Please follow our [Detailed Setup Process](readme_detail.md) to set up and install the required environment and
+dependencies.
+
+### Clone the Repository
 
 ```bash
 git clone https://github.com/liegu0317/Digital_Life_Server.git --recursive
 ```
 
-### 启动服务器
+### Start the Server
 
-启动服务器的具体步骤也包含在[详细配置流程](readme_detail.md)中。
+The specific steps to start the server are also included in the [Detailed Setup Process](readme_detail.md).
 
 ```bash
-run-gpt3.5-api.bat # 或 run-gpt3.5-api.sh
+run-gpt3.5-api.bat # or run-gpt3.5-api.sh
 ```
