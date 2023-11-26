@@ -103,6 +103,7 @@ cp monotonic_align/*.pyd ./ # linux修改为cp monotonic_align/*.so
 
 - [百度网盘](https://pan.baidu.com/s/1BkUnSte6Zso16FYlUMGfww?pwd=lg17)
 - [阿里云盘](https://www.aliyundrive.com/s/jFvgsJVtV6g)
+- [Google Drive](https://drive.google.com/drive/folders/1Jpn8d1g3uQp6wfS0wulri8mQs8Ete1Oj?usp=drive_link)
     - ASR Model: 放置于 `/ASR/resources/models`
     - Sentiment Model: 放置于 `/SentimentEngine/models`
     - TTS Model: 放置于 `/TTS/models`
