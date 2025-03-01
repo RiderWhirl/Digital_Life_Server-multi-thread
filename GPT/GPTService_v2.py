@@ -19,8 +19,14 @@ class GPTService:
         # when the reply gets cut off from hitting the maximum token limit (4,096 for gpt-3.5-turbo or 8,192 for gpt-4)
         if "4" in args.model:
             self.max_history = 8192
+            self.base_url = "https://api.openai.com"
+        elif "D" in args.model or "deep" in args.model:
+            self.max_history = 8192
+            self.base_url = "https://api.deepseek.com"
         else:
             self.max_history = 4096
+            self.base_url = "https://api.openai.com"
+
         logging.info('初始化 ChatGPT 服务...')
         self.tune = tune.get_tune(args.character, args.model)  # 获取tune-催眠咒
         self.is_executed = False  # 标志变量，注入是否已经启用过，初始设置为 Fal
@@ -30,7 +36,7 @@ class GPTService:
         proxies = {"http://": args.proxy, "https://": args.proxy} if args.proxy else None
         # defaults to os.environ.get("OPENAI_API_KEY")
         self.client = OpenAI(
-            api_key=args.APIKey, http_client=httpx.Client(proxies=proxies), organization=None,
+            api_key=args.APIKey, http_client=httpx.Client(proxies=proxies), organization=None, base_url=self.base_url,
         )
         logging.info("ChatGPT 已初始化。")
 
