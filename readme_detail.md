@@ -69,10 +69,20 @@ conda create --name py39 python=3.9
   # yum install portaudio-devel  #CentOS
   ```
   然后安装其他依赖
+  - 默认地址
+  ```bash
+  pip install -r requirements_linux.txt
+  ```
+  - 国内加速地址（下载可能较快）
   ```bash
   pip install -r requirements_linux.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
   ```
 - Windows：
+  - 默认地址
+  ```bash
+  pip install -r requirements_out_of_pytorch.txt
+  ```
+  - 国内加速地址（下载可能较快）
   ```bash
   pip install -r requirements_out_of_pytorch.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
   ```

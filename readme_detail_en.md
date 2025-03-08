@@ -36,25 +36,15 @@ conda create --name py39 python=3.9
 
 **For computers with Nvidia GPUs (install torch with CUDA 11.8):**
 
-- Default URL
-  ```bash
-  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-  ```
-- Domestic accelerated URL (may download faster)
-  ```bash
-  pip install torch==2.0.0+cu118 torchvision torchaudio -f https://mirror.sjtu.edu.cn/pytorch-wheels/torch_stable.html
-  ```
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
 
 **For computers without Nvidia GPUs (install CPU-only torch):**
 
-- Default URL
-  ```bash
-  pip install torch torchvision torchaudio
-  ```
-- Domestic accelerated URL (may download faster)
-  ```bash
-  pip install torch==2.0.0+cpu torchvision torchaudio -f https://mirror.sjtu.edu.cn/pytorch-wheels/torch_stable.html
-  ```
+```bash
+pip install torch torchvision torchaudio
+```
 
 - [Other Version Combination Guide (pytorch.org)](https://pytorch.org/get-started/locally)
 
@@ -62,17 +52,18 @@ conda create --name py39 python=3.9
 
 - Linux:
   First, install portaudio
+  
   ```bash
   apt install portaudio19-dev  #Ubuntu
   # yum install portaudio-devel  #CentOS
   ```
   Then install other dependencies
   ```bash
-  pip install -r requirements_linux.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+  pip install -r requirements_linux.txt
   ```
 - Windows:
   ```bash
-  pip install -r requirements_out_of_pytorch.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+  pip install -r requirements_out_of_pytorch.txt
   ```
 
 #### 4. Build the Corresponding Version of `monotonic_align`
