@@ -123,12 +123,12 @@ run-deepseek-api.sh  # Linux
 
 | 名称          | 描述                  | 备注                                                                             | 必填               |
 |-------------|---------------------|--------------------------------------------------------------------------------|------------------|
-| APIKey      | 应用秘钥                | OPENAI_API_KEY、ERINEBot_API_Key                                                | ERINEBot、ChatGPT |
+| APIKey      | 应用秘钥                | OPENAI_API_KEY、ERINEBot_API_Key                                                | ALL |
 | SecretKey   | ERINEBot Secret Key | ERINEBot Secret Key                                                            | ERINEBot         |
 | accessToken | 会话标志码               | [ERNIEBot accessToken](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/Ilkkrb0i5) |
-| proxy       | 代理服务地址              | ChatGPT 代理服务的地址，例如http://127.0.0.1:7890                                        |                  |
+| proxy       | 代理服务地址              | 使用 ChatGPT 时代理服务的地址，例如 http://127.0.0.1:7890                                        |                  |
 | brainwash   | 洗脑模式                | 不推荐开启，仅ERNIEBot有效                                                              |                  |
-| model       | 调用的模型               | 指定使用的GPT模型，可选值：gpt-3.5-turbo、gpt-4、ERNIEBot、ERNIEBot-4                         | ALL              |
+| model       | 调用的模型               | 指定使用的GPT模型，可选值：gpt-3.5-turbo、gpt-4、deepseek-chat、deepseek-reasoner、ERNIEBot、ERNIEBot-4                         | ALL              |
 | stream      | 流式回复                | 可有效减少响应时间，可选值：True、False                                                       | ALL              |
 | character   | 使用的角色               | 指定所使用的角色，可选值：paimon、yunfei、catmaid                                             | ALL              |
 

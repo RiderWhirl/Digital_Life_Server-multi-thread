@@ -121,12 +121,12 @@ run-deepseek-api.sh  # Linux
 
 | Name          | Description                  | Remarks                                                                             | Required               |
 |---------------|-----------------------------|-------------------------------------------------------------------------------------|------------------------|
-| APIKey        | Application Key             | OPENAI_API_KEY, ERINEBot_API_Key                                                    | ERINEBot, ChatGPT      |
+| APIKey        | Application Key             | OPENAI_API_KEY, ERINEBot_API_Key                                                    | ALL     |
 | SecretKey     | ERINEBot Secret Key         | ERINEBot Secret Key                                                                | ERINEBot               |
 | accessToken   | Session Token               | [ERNIEBot accessToken](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/Ilkkrb0i5)     |                        |
 | proxy         | Proxy Service Address       | ChatGPT proxy service address, e.g., http://127.0.0.1:7890                          |                        |
 | brainwash     | Brainwash Mode              | Not recommended to enable, only effective for ERNIEBot                              |                        |
-| model         | Model to Call               | Specifies the GPT model to use, options: gpt-3.5-turbo, gpt-4, ERNIEBot, ERNIEBot-4 | ALL                    |
+| model         | Model to Call               | Specifies the GPT model to use, options: gpt-3.5-turbo, gpt-4, deepseek-chat、deepseek-reasoner,ERNIEBot, ERNIEBot-4 | ALL                    |
 | stream        | Stream Response             | Can effectively reduce response time, options: True, False                          | ALL                    |
 | character     | Character to Use            | Specifies the character to use, options: paimon, yunfei, catmaid                    | ALL                    |
 
