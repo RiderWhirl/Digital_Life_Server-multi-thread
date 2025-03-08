@@ -15,7 +15,7 @@ import soundfile
 import GPT.tune
 from ASR import ASRService
 from GPT import ERNIEBotService
-from GPT import GPTService_v2 as GPTService  # 暂时使用v2替换v1
+from GPT import GPTService_v2 as GPTService  # 使用v2替换原有的GPTService
 from SentimentEngine import SentimentEngine
 from TTS import TTService
 from utils.FlushingFileHandler import FlushingFileHandler
@@ -74,6 +74,9 @@ def parse_args():
     # parser.add_argument("--ip", type=str, nargs='?', required=False)
     # 洗脑模式。循环发送提示词
     parser.add_argument("--brainwash", type=str2bool, nargs='?', required=False)
+    parser.add_argument("--base_url", type=str, nargs='?', required=False)
+    # parser.add_argument("--max_history", type=int, nargs='?', required=False)
+    # parser.add_argument("--tune", type=str, nargs='?', required=False)
     return parser.parse_args()
 
 
@@ -131,6 +134,13 @@ class Server:
                 # 生成此次会话标志码
                 self.ERNIEBot.access_token = self.ERNIEBot.get_access_token(args_all.APIKey, args_all.SecretKey)
                 logging.info("会话标志码" + self.ERNIEBot.access_token)
+        elif args_all.model:
+            #自定义模型
+            self.chat_gpt = GPTService.GPTService(args_all)
+            logging.info("使用的模型：{args_all.model}")
+        else:
+            logging.error("未指定模型！")
+            quit()
 
         # 语音合成服务
         self.tts = TTService.TTService(*self.char_name[args_all.character])
@@ -154,7 +164,6 @@ class Server:
         # 使用客户端地址和端口生成唯一的文件名
         only_ip = addr[0].replace('.', '_')
         addr_str = only_ip + '_' + str(addr[1])
-        tmp_recv_file = f'tmp/{addr_str}_{time.time()}_server_received.wav'
         tmp_proc_file = f'tmp/{addr_str}_{time.time()}_server_processed.wav'
         save_session_json = f'tmp/{args.model}_{only_ip}_session_log.json'
         try:
@@ -163,18 +172,24 @@ class Server:
             local_conn.sendall(b'%s' % self.char_name[args.character][2].encode())  # 向客户端发送角色名称
             while True:
                 try:
+                    conn.settimeout(30)
                     resp_text_all = ""
                     file = self.__receive_file(conn)  # 接收文件
                     # logging.info('file received.')
-                    with open(tmp_recv_file, 'wb') as f:
-                        f.write(file)
-                        logging.info('已接收并保存 WAV 文件。')
-                    ask_text = self.process_voice(tmp_recv_file)  # 处理语音获取文本
+                    if isinstance(file, bytes):
+                        tmp_recv_file = f'tmp/{addr_str}_{time.time()}_server_received.wav'
+                        with open(tmp_recv_file, 'wb') as f:
+                            f.write(file)
+                            logging.info('已接收并保存 WAV 文件。')
+                        ask_text = self.process_voice(tmp_recv_file)  # 处理语音获取文本
+                    else:
+                        ask_text = file.decode('utf-8')
+                        logging.info(f"已接收到文本：{ask_text}")
                     with self.lock:
                         self.save_session_to_file(ask_text, save_session_json, "user")  # 保存user发言日志
                     if args.stream:
                         generator = self.ERNIEBot.ask_stream(ask_text,
-                                                             save_session_json) if "Y" in args.model or "E" in args.model else self.chat_gpt.ask_stream(
+                                                             save_session_json) if "Y" in args.model or "ERNIE" in args.model else self.chat_gpt.ask_stream(
                             ask_text)
                         for resp_text in generator:  # 进行对话生成
                             resp_text_all += resp_text
@@ -187,7 +202,7 @@ class Server:
                     else:
                         generator = self.ERNIEBot.ask(
                             ask_text,
-                            save_session_json) if "Y" in args.model or "E" in args.model else self.chat_gpt.ask(
+                            save_session_json) if "Y" in args.model or "ERNIE" in args.model else self.chat_gpt.ask(
                             ask_text)
                         with self.lock:
                             self.save_session_to_file(generator, save_session_json,
@@ -247,30 +262,80 @@ class Server:
         send_data += b'?!'
         send_data += b'%i' % senti
         conn.sendall(send_data)  # 向客户端发送语音回复
-        time.sleep(0.5)
+        #time.sleep(0.5)
         logging.info('WAV SENT, size %i' % len(send_data))  # 记录发送的语音回复的大小
+        send_data = b'[/begin]' + resp_text.encode('utf-8') + b'[/end]'
+        send_data += b'??'
+        conn.sendall(send_data) 
+        logging.info('TEXT SENT, size %i' % len(send_data))  # 记录发送的文本回复的大小
+
+
 
     @staticmethod
     def __receive_file(conn):
         """
         接收文件的私有方法。
-
-        返回接收到的文件数据。
+        
+        Args:
+            conn: socket连接对象
+        
+        Returns:
+            bytes: 接收到的文件数据
+        
+        Raises:
+            socket.timeout: 接收超时
+            socket.error: 连接错误
         """
-        file_data = b''
-        while True:
-            data = conn.recv(1024)
-            # print(data)
-            conn.send(b'sb')
-            if data[-2:] == b'?!':
-                file_data += data[0:-2]
-                break
-            if not data:
-                # logging.info('Waiting for WAV...')
-                continue
-            file_data += data
+        file_data = bytearray()
+        conn.settimeout(30)  # 设置30秒超时
+        
+        try:
+            while True:
+                data = conn.recv(1024)
+                if not data:
+                    if len(file_data) == 0:
+                        continue
+                    break
+                    
+                # 检查是否是文本数据(以??结尾)
+                if data[-2:] == b'??':
+                    file_data.extend(data[:-2])
+                    try:
+                        # 尝试解码确认是文本数据
+                        file_data = file_data.decode('utf-8')
+                        return file_data
+                    except UnicodeDecodeError:
+                        # 如果解码失败，继续作为二进制数据处理
+                        pass
+                        
+                # 检查是否是二进制数据(以?!结尾)
+                elif data[-2:] == b'?!':
+                    file_data.extend(data[:-2])
+                    break
+                    
+                file_data.extend(data)
 
-        return file_data
+                if data[-2:] == b'sd':
+                    time.sleep(1)
+                    conn.send(b'sd')
+                elif data[-2:] == b'!!':
+                    logging.info("A round chat completed.")
+                    conn.settimeout(999999)
+                    break
+                # 每收到4KB数据发送一次确认
+                if len(file_data) % 4096 == 0:
+                    conn.send(b's-')
+                    
+        except socket.timeout:
+            logging.error("接收文件超时")
+            raise
+        except socket.error as e:
+            logging.error(f"接收文件时发生错误: {str(e)}")
+            raise
+        finally:
+            conn.settimeout(None)  # 恢复默认超时设置
+            
+        return bytes(file_data)
 
     @staticmethod
     def fill_size_wav(tmp_recv_file):

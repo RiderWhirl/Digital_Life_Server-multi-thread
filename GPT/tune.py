@@ -18,6 +18,10 @@ def get_tune(character, model):
         file_path = 'GPT/prompts/%s4.txt' % character
         logging.info('DEEPSEEK 提示词: 读取自文件 %s' % file_path)
         return open(file_path, 'r', encoding='utf-8').read()
+    elif model:
+        file_path = 'GPT/prompts/%s35.txt' % character
+        logging.info("自定义模型 " + model + ' 提示词: 读取自文件 %s' % file_path)
+        return open(file_path, 'r', encoding='utf-8').read()
     else:
         logging.warning('No matching model found for character: %s' % character)
         return None

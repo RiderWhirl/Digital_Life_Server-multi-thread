@@ -17,7 +17,10 @@ class GPTService:
         """
         self.history = []
         # when the reply gets cut off from hitting the maximum token limit (4,096 for gpt-3.5-turbo or 8,192 for gpt-4)
-        if "4" in args.model:
+        if args.base_url:
+            self.base_url = args.base_url
+            self.max_history = 4096
+        elif "4" in args.model:
             self.max_history = 8192
             self.base_url = "https://api.openai.com"
         elif "D" in args.model or "deep" in args.model:
@@ -70,7 +73,7 @@ class GPTService:
             message_content = completion.choices[0].message.content
             self.add_to_history(text, message_content)
             if message_content:
-                logging.info('ChatGPT 响应：%s，用时 %.2f 秒' % (message_content, time.time() - stime))
+                logging.info('ChatGPT 响应：%s\n用时 %.2f 秒' % (message_content, time.time() - stime))
                 return message_content
             else:
                 raise ValueError("Invalid response format")
