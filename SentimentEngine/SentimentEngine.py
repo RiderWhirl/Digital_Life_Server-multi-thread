@@ -12,7 +12,8 @@ class SentimentEngine():
 
         self.ort_session = onnxruntime.InferenceSession(onnx_model_path, providers=['CPUExecutionProvider'])
 
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
+        #self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
+        self.tokenizer = BertTokenizer.from_pretrained("./BERT") # use local BERT model to avoid downloading from huggingface
 
     def infer(self, text):
         # 使用BertTokenizer对文本进行分词和编码
