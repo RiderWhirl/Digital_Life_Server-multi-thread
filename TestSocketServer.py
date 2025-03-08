@@ -41,12 +41,12 @@ def test_socket_server():
                         client_socket.sendall(audio_data)
                         # 等待服务器的确认信号
                         ack = client_socket.recv(2)
-                        if ack != b'sb':
+                        if ack != b'sd':
                             # logging.error('未收到正确的确认信号，停止发送')
                             continue
 
                     # 发送结束标志
-                    client_socket.sendall(b'?!')
+                    client_socket.sendall(b'v~')
                     logging.info('音频文件发送完成！')
 
             except FileNotFoundError:

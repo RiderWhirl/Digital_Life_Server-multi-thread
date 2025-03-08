@@ -75,7 +75,7 @@ def parse_args():
     # 洗脑模式。循环发送提示词
     parser.add_argument("--brainwash", type=str2bool, nargs='?', required=False)
     parser.add_argument("--base_url", type=str, nargs='?', required=False)
-    # parser.add_argument("--max_history", type=int, nargs='?', required=False)
+    parser.add_argument("--max_history", type=int, nargs='?', required=False)
     # parser.add_argument("--tune", type=str, nargs='?', required=False)
     return parser.parse_args()
 
@@ -183,7 +183,7 @@ class Server:
                             logging.info('已接收并保存 WAV 文件。')
                         ask_text = self.process_voice(tmp_recv_file)  # 处理语音获取文本
                     else:
-                        ask_text = file.decode('utf-8')
+                        ask_text = file
                         logging.info(f"已接收到文本：{ask_text}")
                     with self.lock:
                         self.save_session_to_file(ask_text, save_session_json, "user")  # 保存user发言日志
@@ -259,13 +259,13 @@ class Server:
             senti = senti_or
         else:
             senti = self.sentiment.infer(resp_text)  # 对回复文本进行情感分析
-        send_data += b'?!'
+        send_data += b'v~'
         send_data += b'%i' % senti
         conn.sendall(send_data)  # 向客户端发送语音回复
         #time.sleep(0.5)
         logging.info('WAV SENT, size %i' % len(send_data))  # 记录发送的语音回复的大小
         send_data = b'[/begin]' + resp_text.encode('utf-8') + b'[/end]'
-        send_data += b'??'
+        send_data += b't~'
         conn.sendall(send_data) 
         logging.info('TEXT SENT, size %i' % len(send_data))  # 记录发送的文本回复的大小
 
@@ -298,7 +298,7 @@ class Server:
                     break
                     
                 # 检查是否是文本数据(以??结尾)
-                if data[-2:] == b'??':
+                if data[-2:] == b't~':
                     file_data.extend(data[:-2])
                     try:
                         # 尝试解码确认是文本数据
@@ -318,10 +318,12 @@ class Server:
                 if data[-2:] == b'sd':
                     time.sleep(1)
                     conn.send(b'sd')
-                elif data[-2:] == b'!!':
-                    logging.info("A round chat completed.")
-                    conn.settimeout(999999)
-                    break
+                elif data[-2:] == b'd~':
+                    #logging.info("A round chat completed.")
+                    logging.info("Received 'done' signal, waiting for next message.")
+                    file_data = bytearray()  # Clear file_data to wait for the next message
+                    conn.settimeout(999999) # Set timeout to wait for the next message
+                    continue
                 # 每收到4KB数据发送一次确认
                 if len(file_data) % 4096 == 0:
                     conn.send(b's-')

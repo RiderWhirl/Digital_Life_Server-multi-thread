@@ -31,7 +31,7 @@ def test_socket_server():
 
             # 发送文本数据
             try:
-                client_socket.sendall(text_input.encode('utf-8') + b'??')
+                client_socket.sendall(text_input.encode('utf-8') + b't~')
                 logging.info('文本数据发送完成！')
 
                 # 接收并打印服务器返回的文本回复
@@ -40,11 +40,12 @@ def test_socket_server():
                 while True:
                     data = client_socket.recv(1024)
                     response += data
-                    if b'?!' in data and not got_voice:
+                    if b'v~' in data and not got_voice:
                         logging.info('收到完整语音')
                         got_voice = True
 
-                    if b'??' in data:
+                        
+                    if b't~' in data:
                         break
 
                 # 查找 [/begin] 和 [/end] 标记
@@ -55,7 +56,7 @@ def test_socket_server():
                 if begin_index != -1 and end_index != -1:
                     content = response[begin_index + len(b'[/begin]'):end_index]
                     logging.info('收到完整文本回复: %s', content.decode('utf-8'))
-                    client_socket.sendall(b'!!') # 发送确认信号
+                    client_socket.sendall(b'd~') # 发送确认信号
                 else:
                     logging.error('未能找到 [/begin] 和 [/end] 标记')
 
