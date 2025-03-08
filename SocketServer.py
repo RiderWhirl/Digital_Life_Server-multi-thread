@@ -119,7 +119,10 @@ class Server:
         if "gpt" in args_all.model or "GPT" in args_all.model:
             # ChatGPT对话生成服务
             self.chat_gpt = GPTService.GPTService(args_all)
-        elif "Y" in args_all.model or "E" in args_all.model:
+        elif "deep" in args_all.model: 
+            #Deepseek对话生成服务
+            self.chat_gpt = GPTService.GPTService(args_all)
+        elif "Y" in args_all.model or "ERNIE" in args_all.model:
             # ERNIEBot对话生成服务
             self.ERNIEBot = ERNIEBotService.ERNIEBot(args_all)
             if args_all.accessToken:

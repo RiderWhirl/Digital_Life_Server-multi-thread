@@ -7,6 +7,7 @@ ASR/resources/models/model.onnx
 ASR/resources/models/token_list.pkl
 SentimentEngine/models/paimon_sentiment.onnx
 TTS/models/*
+BERT/*
 
 # Build artifacts and compiled Python files
 dist/
@@ -29,3 +30,5 @@ test*
 /TTS/vits/output.wav
 updataRequriement.py
 GPT/ERNIEBotAPI_Demo.py
+*dev*
+*old

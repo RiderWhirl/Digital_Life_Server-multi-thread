@@ -1,27 +1,24 @@
 # Digital Life Server
 
 <p align="center">
-    <a href="https://github.com/LIEGU0317/Digital_Life_Server/graphs/contributors">
-        <img src="https://img.shields.io/github/contributors/LIEGU0317/Digital_Life_Server"
+    <a href="https://github.com/RiderWhirl/Digital_Life_Server-multi-thread/graphs/contributors">
+        <img src="https://img.shields.io/github/contributors/RiderWhirl/Digital_Life_Server-multi-thread"
             alt="Contributors"/></a>
-    <a href="https://github.com/LIEGU0317/Digital_Life_Server/network/members">
-        <img src="https://img.shields.io/github/forks/LIEGU0317/Digital_Life_Server"
+    <a href="https://github.com/RiderWhirl/Digital_Life_Server-multi-thread/network/members">
+        <img src="https://img.shields.io/github/forks/RiderWhirl/Digital_Life_Server-multi-thread"
             alt="Forks"/></a>
-    <a href="https://github.com/LIEGU0317/Digital_Life_Server/stargazers">
-        <img src="https://img.shields.io/github/stars/LIEGU0317/Digital_Life_Server"
+    <a href="https://github.com/RiderWhirl/Digital_Life_Server-multi-thread/stargazers">
+        <img src="https://img.shields.io/github/stars/RiderWhirl/Digital_Life_Server-multi-thread"
             alt="Stars"/></a>
-    <a href="https://github.com/LIEGU0317/Digital_Life_Server/issues">
-        <img src="https://img.shields.io/github/issues/LIEGU0317/Digital_Life_Server"
+    <a href="https://github.com/RiderWhirl/Digital_Life_Server-multi-thread/issues">
+        <img src="https://img.shields.io/github/issues/RiderWhirl/Digital_Life_Server-multi-thread"
             alt="Issues"/></a>
-    <a href="https://github.com/LIEGU0317/Digital_Life_Server/pulls">
-        <img src="https://img.shields.io/github/issues-pr/LIEGU0317/Digital_Life_Server"
+    <a href="https://github.com/RiderWhirl/Digital_Life_Server-multi-thread/pulls">
+        <img src="https://img.shields.io/github/issues-pr/RiderWhirl/Digital_Life_Server-multi-thread"
             alt="Pull Requests"/></a>
-    <a href="https://twitter.com/intent/follow?screen_name=liegu0317">
-        <img src="https://img.shields.io/twitter/follow/liegu0317?style=social&logo=twitter"
-            alt="follow on Twitter"></a>
 </p>
 
-This service encompasses front-end communication, voice recognition, ChatGPT/ERNIE-Bot integration, and speech
+This service encompasses front-end communication, voice recognition, ChatGPT/Deepseek/ERNIE-Bot integration, and speech
 synthesis. It serves as the core of the Digital Life ecosystem, designed to provide users with a seamless and dynamic
 digital experience.
 
@@ -32,21 +29,21 @@ digital experience.
 
 ### Related Projects
 
-- [UE Client](https://github.com/LIEGU0317/DigitalLife): The front-end part for rendering character animations,
+- [UE Client](https://github.com/RiderWhirl/DigitalLife): The front-end part for rendering character animations,
   recording, and playing sounds.
 
 [Detailed Setup Process](readme_detail.md) | [Development Plan](todolist.md)
 
 ## Quick Start
 
-Please follow our [Detailed Setup Process](readme_detail.md) to set up and install the required environment and
-dependencies.
-
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/liegu0317/Digital_Life_Server.git --recursive
+git clone https://github.com/RiderWhirl/Digital_Life_Server-multi-thread.git --recursive
 ```
+
+#### Get API Key
+ - [How to get API Key](how_to_get_an_API_key_EN.md)
 
 ### Start the Server
 
